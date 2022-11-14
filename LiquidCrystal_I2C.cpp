@@ -197,6 +197,18 @@ void LiquidCrystal_I2C::setBacklight( uint8_t value )
    }
 }
 
+//
+// getCharAt
+char LiquidCrystal_I2C::getCharAt(uint8_t col, uint8_t row)
+{
+   // call setCursor will set a DDRAM address at the correct position
+   setCursor(col, row);
+
+   uint8_t result = (read4bits() << 4);
+   result |= read4bits();
+
+   return result;
+}
 
 // PRIVATE METHODS
 // ---------------------------------------------------------------------------
@@ -292,6 +304,44 @@ void LiquidCrystal_I2C::write4bits ( uint8_t value, uint8_t mode )
    
    pinMapValue |= mode | _backlightStsMask;
    pulseEnable ( pinMapValue );
+}
+
+//
+// read4bits
+uint8_t LiquidCrystal_I2C::read4bits()
+{
+   uint8_t pinMapValue = 0;
+   // The I/Os should be high before being used as inputs (PCF8574 datasheet, at the end of section 8.1)
+   pinMapValue |= _data_pins[0] | _data_pins[1] | _data_pins[2] | _data_pins[3];
+   //Rs and Rw should be HIGH
+   pinMapValue |= _Rw | _Rs;
+   // take care of backlight status mask
+   pinMapValue |= _backlightStsMask;
+
+   _i2cio.write (pinMapValue);
+
+   // Read the data (HH4478 datasheet Figure 9 4-Bit Transfer Example)
+   // now read the high 4 bits
+   _i2cio.write (pinMapValue | _En);   // En HIGH
+   // a trick to workaround of I2CIO Direction Mask
+   _i2cio.portMode(INPUT);
+   uint8_t value = _i2cio.read();
+   // set I2CIO Direction Mask to OUTPUT
+   _i2cio.portMode(OUTPUT);
+   _i2cio.write (pinMapValue & ~_En);  // En LOW
+
+   // Map the value from LCD pin mapping
+   // --------------------------------
+   uint8_t result = 0;
+   for ( uint8_t i = 0; i < 4; i++ )
+   {
+      if ( ( value & _data_pins[i] ) == _data_pins[i] )
+      {
+         result |= (1 << i);
+      }
+   }
+
+   return result;
 }
 
 //

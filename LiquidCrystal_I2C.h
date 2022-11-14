@@ -158,6 +158,22 @@ public:
 
   /*!
    @function
+    @abstract   Gets the character at specific LCD position.
+    @discussion Gets the character at specific LCD position.
+    It will call setCursor to set a correct DDRAM address in order to read
+    a character from it. It will not restore the previous cursor position.
+    @see setCursor
+
+    @param      col[in] LCD column
+    @param      row[in] LCD row - line.
+    @result     Character at the specific LCD position
+    */
+   char getCharAt(uint8_t col, uint8_t row);
+
+private:
+
+   /*!
+    @function
    @abstract   Initialises class private variables
    @discussion This is the class single point for initialising private variables.
    Making config public would enable to inherit and overload the methdo by a custom one.
@@ -193,6 +209,14 @@ private:
     COMMAND == command, DATA == data.
     */
    void write4bits(uint8_t value, uint8_t mode);
+
+   /*!
+    @method
+    @abstract   Reads 4 bit value from the LCD.
+    @discussion Reads 4 bits from the LCD data lines.
+    @result     4 data bits read from LCD. They are stored in the low nibble of returned value.
+    */
+   uint8_t read4bits();
 
    /*!
     @method
